@@ -1,6 +1,6 @@
 [package]
 name = "to-dos"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 description = "An easy way to manage your todos"
 license = "MIT"
@@ -13,3 +13,4 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.98"
+which = "8.0.0"

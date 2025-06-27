@@ -27,7 +27,7 @@ A todo file for this directory will be created under `~/.todo/todos/`
 
 - [ ] Sub-commands, args
 
-- [ ] Windows support
+- [x] Windows support
 
 - [ ] Test on MacOS
 
