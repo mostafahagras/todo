@@ -8,7 +8,6 @@ fn main() -> AnyResult<()> {
     let stripped = cwd.strip_prefix(home_dir).unwrap_or(&cwd);
     let cwd_todo = todo_path.join(stripped);
     let file = cwd_todo.join("todo.md");
-    println!("{todo_path:?} + {stripped:?} = {cwd_todo:?}");
     let editor = env::var("EDITOR").map_err(|_| anyhow!("EDITOR is not set"))?;
     Command::new("mkdir")
         .arg("-p")
