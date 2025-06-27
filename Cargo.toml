@@ -1,7 +1,15 @@
 [package]
-name = "todo"
+name = "to-dos"
 version = "0.1.0"
 edition = "2024"
+description = "An easy way to manage your todos"
+license = "MIT"
+repository = "https://github.com/mostafahagras/todo"
+readme = "README.md"
+
+[[bin]]
+name = "todo"
+path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.98"
