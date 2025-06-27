@@ -2,9 +2,24 @@
 
 An easy way to manage your todos
 
+## Installation
+
+```bash
+cargo install to-dos
+```
+
+## Usage
+
+```bash
+$ cd any_directory
+$ todo
+```
+
+A todo file for this directory will be created under `~/.todo/todos/`
+
 ## To-dos:
 
-- [ ] Publish on crates.io
+- [x] Publish on crates.io
 
 - [ ] Configure editor (defaults to `$EDITOR`)
 
