@@ -1,5 +1,5 @@
 mod config;
-use crate::config::load_config;
+use crate::config::{init_config, load_config};
 use anyhow::{anyhow, Result as AnyResult};
 use std::{env, fs, process::Command};
 use which::which;
@@ -12,6 +12,10 @@ fn main() -> AnyResult<()> {
     let cwd_todo_dir = todo_path.join(stripped);
 
     let config = load_config()?;
+    let config = match config {
+        Some(_) => config.unwrap(),
+        None => init_config()?,
+    };
     let file = config.filename + &config.extension;
     let file_path = cwd_todo_dir.join(file);
 
