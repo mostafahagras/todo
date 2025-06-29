@@ -1,10 +1,22 @@
+mod cli;
 mod config;
-use crate::config::{init_config, load_config};
-use anyhow::{anyhow, Result as AnyResult};
+mod remove;
+mod sync;
+mod update;
+use crate::{
+    cli::{Cli, Commands},
+    config::{configure, load_config},
+    remove::remove,
+    sync::{sync, unsync},
+    update::update,
+};
+use anyhow::{anyhow, Ok, Result as AnyResult};
+use clap::Parser;
 use std::{env, fs, process::Command};
 use which::which;
 
 fn main() -> AnyResult<()> {
+    let cli = Cli::parse();
     let home_dir = env::home_dir().ok_or_else(|| anyhow!("home_dir is `None`"))?;
     let todo_path = home_dir.join(".todo/todos");
     let cwd = env::current_dir()?;
@@ -12,12 +24,17 @@ fn main() -> AnyResult<()> {
     let cwd_todo_dir = todo_path.join(stripped);
 
     let config = load_config()?;
+    let mut configured = false;
     let config = match config {
         Some(_) => config.unwrap(),
-        None => init_config()?,
+        None => {
+            let config = configure(false)?;
+            configured = true;
+            config
+        }
     };
     let file = config.filename + &config.extension;
-    let file_path = cwd_todo_dir.join(file);
+    let file_path = cwd_todo_dir.join(&file);
 
     let editor = if config.editor.starts_with("$") {
         let var = &config.editor[1..];
@@ -26,10 +43,33 @@ fn main() -> AnyResult<()> {
         Ok(config.editor)
     }?;
 
-    fs::create_dir_all(&cwd_todo_dir)?;
-    Command::new(which(&editor).map_err(|_| anyhow!("Cannot find binary path for `{editor}`"))?)
-        .arg(file_path)
-        .spawn()?
-        .wait()?;
+    match cli.command {
+        Some(command) => match command {
+            Commands::Update => update(),
+            Commands::Sync => sync(file_path, file),
+            Commands::Unsync => unsync(file_path, file),
+            Commands::List => {
+                println!("{}", fs::read_to_string(file_path)?);
+                Ok(())
+            }
+            Commands::Config => {
+                if !configured {
+                    configure(!configured)?;
+                }
+                Ok(())
+            }
+            Commands::Remove(args) => remove(args),
+        },
+        None => {
+            fs::create_dir_all(&cwd_todo_dir)?;
+            Command::new(
+                which(&editor).map_err(|_| anyhow!("Cannot find binary path for `{editor}`"))?,
+            )
+            .arg(file_path)
+            .spawn()?
+            .wait()?;
+            Ok(())
+        }
+    }?;
     Ok(())
 }

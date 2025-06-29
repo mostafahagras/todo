@@ -27,6 +27,12 @@ pub struct Config {
     pub editor: String,
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        RawConfig::default().into()
+    }
+}
+
 impl From<RawConfig> for Config {
     fn from(value: RawConfig) -> Self {
         Self {
@@ -52,13 +58,18 @@ pub fn load_config() -> AnyResult<Option<Config>> {
     }
 }
 
-pub fn init_config() -> AnyResult<Config> {
+pub fn configure(config_exists: bool) -> AnyResult<Config> {
     let options = vec!["1) Use default config", "2) Customize config", "3) Cancel"];
-    let choice = Select::new("Looks like you have no config yet...", options)
+    let prompt = if config_exists {
+        "Select an option"
+    } else {
+        "Looks like you have no config yet..."
+    };
+    let choice = Select::new(prompt, options)
         .prompt()
         .map_err(|e| anyhow!("Prompt failed: {}", e))?;
     let config = match choice.chars().next().unwrap() {
-        '1' => RawConfig::default().into(),
+        '1' => Config::default(),
         '2' => Config {
             filename: Text::new("Filename:").with_default("todo").prompt()?,
             extension: Text::new("Extension:").with_default(".md").prompt()?,

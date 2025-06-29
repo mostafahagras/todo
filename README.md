@@ -19,6 +19,23 @@ A todo file for this directory will be created under `~/.todo/todos/`
 
 For windows, `%USERPROFILE%\.todo\todos\`
 
+
+```txt
+Usage: todo [COMMAND]
+
+Commands:
+  sync    Create a hard link to this directory's todo file in the current directory
+  unsync  Undo the sync command
+  list    List the todos for the current directory
+  config  Interactive configuration for the todo cli
+  remove  Removes the todo for the current directory. Use todo help remove for other options
+  update  Update todo cli
+  help    Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version```
+
 ## Configuration
 
 The config file is located at `~/.todo/config.toml`
@@ -50,6 +67,14 @@ editor = "$EDITOR" # can be an environment variable or a hardcoded command
 - [x] Configure file type (defaults to markdown)
 
 - [ ] Sub-commands, args
+
+    - [x] sync/unsync
+
+    - [ ] remove
+
+    - [ ] config
+
+    - [x] update
 
 - [x] Windows support
 
