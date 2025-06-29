@@ -12,7 +12,7 @@ use crate::{
 };
 use anyhow::{anyhow, Ok, Result as AnyResult};
 use clap::Parser;
-use std::{env, fs, process::Command};
+use std::{env, fs, io, process::Command};
 use which::which;
 
 fn main() -> AnyResult<()> {
@@ -49,7 +49,13 @@ fn main() -> AnyResult<()> {
             Commands::Sync => sync(file_path, file),
             Commands::Unsync => unsync(file_path, file),
             Commands::List => {
-                println!("{}", fs::read_to_string(file_path)?);
+                let content = fs::read_to_string(file_path);
+                if let Err(error) = &content
+                    && error.kind() == io::ErrorKind::NotFound
+                {
+                    return Err(anyhow!("❌ There's no todo for this directory"));
+                }
+                println!("{}", content?);
                 Ok(())
             }
             Commands::Config => {
