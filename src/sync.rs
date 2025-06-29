@@ -7,8 +7,7 @@ where
     Q: AsRef<Path> + std::fmt::Debug,
 {
     if !fs::exists(&original)? {
-        println!("❌ there's no todo file for the current directory");
-        return Ok(());
+        return Err(anyhow!("❌ there's no todo file for the current directory"));
     }
     if fs::exists(&link)? {
         println!("⚠️ {link:?} is already synced with {original:?}");
