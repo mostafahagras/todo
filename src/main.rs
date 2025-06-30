@@ -12,7 +12,7 @@ use crate::{
     update::update,
     utils::{get_cwd_todo_dir, get_todo_file_path, resolve_editor},
 };
-use anyhow::{anyhow, Result as AnyResult};
+use anyhow::{Result as AnyResult, anyhow};
 use clap::Parser;
 use std::{fs, io, process::Command};
 use which::which;

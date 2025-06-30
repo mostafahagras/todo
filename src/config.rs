@@ -1,5 +1,5 @@
 use crate::utils::{get_config_path, get_todo_path, update_todos};
-use anyhow::{anyhow, Result as AnyResult};
+use anyhow::{Result as AnyResult, anyhow};
 use inquire::{Select, Text};
 use serde::{Deserialize, Serialize};
 use std::{fs, io, process::exit};

@@ -1,5 +1,5 @@
-use crate::config::{load_config, Config};
-use anyhow::{anyhow, Result as AnyResult};
+use crate::config::{Config, load_config};
+use anyhow::{Result as AnyResult, anyhow};
 use std::{env, fs, path::PathBuf};
 
 pub fn get_home_dir() -> AnyResult<PathBuf> {
