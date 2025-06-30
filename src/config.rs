@@ -1,7 +1,8 @@
-use anyhow::{anyhow, Result as AnyResult};
+use crate::utils::get_config_path;
+use anyhow::{Result as AnyResult, anyhow};
 use inquire::{Select, Text};
 use serde::{Deserialize, Serialize};
-use std::{env, fs, io, process::exit};
+use std::{fs, io, process::exit};
 
 #[derive(Debug, Deserialize)]
 struct RawConfig {
@@ -44,9 +45,8 @@ impl From<RawConfig> for Config {
 }
 
 pub fn load_config() -> AnyResult<Option<Config>> {
-    let home_dir = env::home_dir().ok_or_else(|| anyhow!("home_dir is `None`"))?;
-    let config_path = home_dir.join(".todo/config.toml");
-    let config = fs::read_to_string(config_path);
+    let config_path = get_config_path()?;
+    let config = fs::read_to_string(&config_path);
     match config {
         Ok(config_str) => Ok(Some(
             toml::from_str::<RawConfig>(&config_str)
@@ -54,35 +54,48 @@ pub fn load_config() -> AnyResult<Option<Config>> {
                 .into(),
         )),
         Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
-        Err(err) => Err(err.into()),
+        Err(err) => Err(anyhow!(
+            "❌ Failed to read config file at {}: {err}",
+            config_path.display()
+        )),
     }
 }
 
-pub fn configure(config_exists: bool) -> AnyResult<Config> {
+pub fn configure(user_triggered: bool) -> AnyResult<Config> {
     let options = vec!["1) Use default config", "2) Customize config", "3) Cancel"];
-    let prompt = if config_exists {
+    let prompt = if user_triggered {
         "Select an option"
     } else {
         "Looks like you have no config yet..."
     };
     let choice = Select::new(prompt, options)
         .prompt()
-        .map_err(|e| anyhow!("Prompt failed: {}", e))?;
+        .map_err(|e| anyhow!("❌ Prompt failed: {e}"))?;
     let config = match choice.chars().next().unwrap() {
         '1' => Config::default(),
         '2' => Config {
-            filename: Text::new("Filename:").with_default("todo").prompt()?,
-            extension: Text::new("Extension:").with_default(".md").prompt()?,
-            editor: Text::new("Editor:").with_default("$EDITOR").prompt()?,
+            filename: Text::new("Filename:")
+                .with_default("todo")
+                .prompt()
+                .map_err(|e| anyhow!("❌ Failed to get filename: {e}"))?,
+            extension: Text::new("Extension:")
+                .with_default(".md")
+                .prompt()
+                .map_err(|e| anyhow!("❌ Failed to get extension: {e}"))?,
+            editor: Text::new("Editor:")
+                .with_default("$EDITOR")
+                .prompt()
+                .map_err(|e| anyhow!("❌ Failed to get editor: {e}"))?,
         },
         '3' => exit(0),
-        _ => unreachable!("no such option"),
+        _ => unreachable!("❌ No such option selected."),
     };
 
-    let home_dir = env::home_dir().ok_or_else(|| anyhow!("home_dir is `None`"))?;
-    let config_path = home_dir.join(".todo/config.toml");
-    fs::create_dir_all(config_path.parent().unwrap())?;
-    fs::write(&config_path, toml::to_string(&config)?)?;
-    println!("Saved config to {}", config_path.display());
+    let config_path = get_config_path()?;
+    fs::create_dir_all(config_path.parent().unwrap())
+        .map_err(|e| anyhow!("❌ Failed to create config directory: {e}"))?;
+    fs::write(&config_path, toml::to_string(&config)?)
+        .map_err(|e| anyhow!("❌ Failed to write config file: {e}"))?;
+    println!("✅ Saved config to {}", config_path.display());
     Ok(config)
 }

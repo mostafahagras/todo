@@ -3,77 +3,59 @@ mod config;
 mod remove;
 mod sync;
 mod update;
+mod utils;
 use crate::{
     cli::{Cli, Commands},
     config::{configure, load_config},
     remove::remove,
     sync::{sync, unsync},
     update::update,
+    utils::{get_cwd_todo_dir, get_todo_file_path, resolve_editor},
 };
-use anyhow::{anyhow, Ok, Result as AnyResult};
+use anyhow::{Result as AnyResult, anyhow};
 use clap::Parser;
-use std::{env, fs, io, process::Command};
+use std::{fs, io, process::Command};
 use which::which;
 
 fn main() -> AnyResult<()> {
     let cli = Cli::parse();
-    let home_dir = env::home_dir().ok_or_else(|| anyhow!("home_dir is `None`"))?;
-    let todo_path = home_dir.join(".todo/todos");
-    let cwd = env::current_dir()?;
-    let stripped = cwd.strip_prefix(home_dir).unwrap_or(&cwd);
-    let cwd_todo_dir = todo_path.join(stripped);
-
-    let config = load_config()?;
-    let mut configured = false;
-    let config = match config {
-        Some(_) => config.unwrap(),
-        None => {
-            let config = configure(false)?;
-            configured = true;
-            config
-        }
-    };
-    let file = config.filename + &config.extension;
-    let file_path = cwd_todo_dir.join(&file);
-
-    let editor = if config.editor.starts_with("$") {
-        let var = &config.editor[1..];
-        env::var(var).map_err(|_| anyhow!("Environment variable `{var}` is not set"))
-    } else {
-        Ok(config.editor)
-    }?;
-
     match cli.command {
         Some(command) => match command {
             Commands::Update => update(),
-            Commands::Sync => sync(file_path, file),
-            Commands::Unsync => unsync(file_path, file),
+            Commands::Sync => sync(get_todo_file_path()?),
+            Commands::Unsync => unsync(get_todo_file_path()?),
             Commands::List => {
-                let content = fs::read_to_string(file_path);
-                if let Err(error) = &content
-                    && error.kind() == io::ErrorKind::NotFound
-                {
-                    return Err(anyhow!("❌ There's no todo for this directory"));
+                match fs::read_to_string(get_todo_file_path()?) {
+                    Ok(content) => println!("{}", content.trim()),
+                    Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                        return Err(anyhow!(
+                            "❌ No todo file found for this directory. Run `todo` to create one."
+                        ));
+                    }
+                    Err(error) => return Err(anyhow!("❌ Failed to read todo file: {error}")),
                 }
-                println!("{}", content?);
                 Ok(())
             }
             Commands::Config => {
-                if !configured {
-                    configure(!configured)?;
-                }
+                configure(true)?;
                 Ok(())
             }
             Commands::Remove(args) => remove(args),
         },
         None => {
-            fs::create_dir_all(&cwd_todo_dir)?;
+            let cwd_todo_dir = get_cwd_todo_dir()?;
+            fs::create_dir_all(&cwd_todo_dir)
+                .map_err(|e| anyhow!("❌ Failed to create todo directory: {e}"))?;
+            let config = load_config()?.unwrap_or(configure(false)?);
+            let editor = resolve_editor(config.editor)?;
             Command::new(
-                which(&editor).map_err(|_| anyhow!("Cannot find binary path for `{editor}`"))?,
+                which(&editor).map_err(|_| anyhow!("❌ Could not find the editor binary `{editor}`. Please check your config or PATH."))?,
             )
-            .arg(file_path)
-            .spawn()?
-            .wait()?;
+            .arg(get_todo_file_path()?)
+            .spawn()
+            .map_err(|e| anyhow!("❌ Failed to launch editor `{editor}`: {e}"))?
+            .wait()
+            .map_err(|e| anyhow!("❌ Editor process failed: {e}"))?;
             Ok(())
         }
     }?;

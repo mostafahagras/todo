@@ -1,29 +1,27 @@
-use anyhow::{anyhow, Ok, Result as AnyResult};
-use std::{fs, path::Path};
+use anyhow::{Result as AnyResult, anyhow};
+use std::{fs, path::PathBuf};
 
-pub fn sync<P, Q>(original: P, link: Q) -> AnyResult<()>
-where
-    P: AsRef<Path> + std::fmt::Debug,
-    Q: AsRef<Path> + std::fmt::Debug,
-{
+pub fn sync(original: PathBuf) -> AnyResult<()> {
+    let link = original
+        .file_name()
+        .ok_or_else(|| anyhow!("Invalid path"))?;
     if !fs::exists(&original)? {
         return Err(anyhow!("❌ there's no todo file for the current directory"));
     }
-    if fs::exists(&link)? {
+    if fs::exists(link)? {
         println!("⚠️ {link:?} is already synced with {original:?}");
         return Ok(());
     }
-    fs::hard_link(original, link).map_err(|e| anyhow!("Error: {e}"))
+    fs::hard_link(&original, link).map_err(|e| anyhow!("Error: {e}"))
 }
 
-pub fn unsync<P, Q>(original: P, link: Q) -> AnyResult<()>
-where
-    P: AsRef<Path> + std::fmt::Debug,
-    Q: AsRef<Path> + std::fmt::Debug,
-{
-    if !fs::exists(&link)? {
+pub fn unsync(original: PathBuf) -> AnyResult<()> {
+    let synced_path = original
+        .file_name()
+        .ok_or_else(|| anyhow!("Invalid path"))?;
+    if !fs::exists(synced_path)? {
         println!("⚠️ {original:?} is not synced");
         return Ok(());
     }
-    fs::remove_file(link).map_err(|e| anyhow!("Error: {e}"))
+    fs::remove_file(synced_path).map_err(|e| anyhow!("Error: {e}"))
 }

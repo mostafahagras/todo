@@ -70,9 +70,13 @@ editor = "$EDITOR" # can be an environment variable or a hardcoded command
 
     - [x] sync/unsync
 
-    - [ ] remove
+    - [x] remove
 
     - [ ] config
+
+      - [ ] list
+
+      - [ ] remove
 
     - [x] update
 
