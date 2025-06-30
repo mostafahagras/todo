@@ -12,7 +12,7 @@ use crate::{
     update::update,
     utils::{get_cwd_todo_dir, get_todo_file_path, resolve_editor},
 };
-use anyhow::{Result as AnyResult, anyhow};
+use anyhow::{anyhow, Result as AnyResult};
 use clap::Parser;
 use std::{fs, io, process::Command};
 use which::which;
@@ -46,7 +46,11 @@ fn main() -> AnyResult<()> {
             let cwd_todo_dir = get_cwd_todo_dir()?;
             fs::create_dir_all(&cwd_todo_dir)
                 .map_err(|e| anyhow!("❌ Failed to create todo directory: {e}"))?;
-            let config = load_config()?.unwrap_or(configure(false)?);
+            let config = load_config()?;
+            let config = match config {
+                Some(config) => config,
+                None => configure(false)?,
+            };
             let editor = resolve_editor(config.editor)?;
             Command::new(
                 which(&editor).map_err(|_| anyhow!("❌ Could not find the editor binary `{editor}`. Please check your config or PATH."))?,

@@ -1,5 +1,5 @@
-use crate::utils::get_config_path;
-use anyhow::{Result as AnyResult, anyhow};
+use crate::utils::{get_config_path, get_todo_path, update_todos};
+use anyhow::{anyhow, Result as AnyResult};
 use inquire::{Select, Text};
 use serde::{Deserialize, Serialize};
 use std::{fs, io, process::exit};
@@ -21,7 +21,7 @@ impl Default for RawConfig {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq)]
 pub struct Config {
     pub filename: String,
     pub extension: String,
@@ -31,6 +31,12 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         RawConfig::default().into()
+    }
+}
+
+impl Config {
+    fn names_changed(old: &Self, new: &Self) -> bool {
+        old.filename != new.filename || old.extension != new.extension
     }
 }
 
@@ -91,11 +97,29 @@ pub fn configure(user_triggered: bool) -> AnyResult<Config> {
         _ => unreachable!("❌ No such option selected."),
     };
 
+    let old_config = load_config()?;
+    if let Some(ref old_config) = old_config {
+        if config == *old_config {
+            println!("ℹ The config wasn't changed");
+            return Ok(config);
+        }
+    }
     let config_path = get_config_path()?;
     fs::create_dir_all(config_path.parent().unwrap())
         .map_err(|e| anyhow!("❌ Failed to create config directory: {e}"))?;
     fs::write(&config_path, toml::to_string(&config)?)
         .map_err(|e| anyhow!("❌ Failed to write config file: {e}"))?;
     println!("✅ Saved config to {}", config_path.display());
+    if old_config.is_some() && Config::names_changed(&config, &old_config.unwrap()) {
+        let todos_path = get_todo_path()?;
+        if todos_path.exists() {
+            match update_todos(todos_path, &config) {
+                Ok(_) => println!("✅ Updated todos"),
+                Err(err) => {
+                    return Err(anyhow!("❌ Failed to update todos: {err:?}"));
+                }
+            }
+        }
+    }
     Ok(config)
 }

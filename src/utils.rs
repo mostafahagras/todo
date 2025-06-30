@@ -1,6 +1,6 @@
-use crate::config::load_config;
-use anyhow::{Result as AnyResult, anyhow};
-use std::{env, path::PathBuf};
+use crate::config::{load_config, Config};
+use anyhow::{anyhow, Result as AnyResult};
+use std::{env, fs, path::PathBuf};
 
 pub fn get_home_dir() -> AnyResult<PathBuf> {
     env::home_dir().ok_or_else(|| {
@@ -40,4 +40,23 @@ pub fn resolve_editor(editor: String) -> AnyResult<String> {
     } else {
         Ok(editor)
     }
+}
+
+pub fn update_todos(dir: PathBuf, new_config: &Config) -> AnyResult<()> {
+    let new_filename = new_config.filename.clone() + &new_config.extension;
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            update_todos(path, new_config)?;
+        } else {
+            fs::rename(
+                &path,
+                path.parent()
+                    .ok_or_else(|| anyhow!("❌ Invalid path"))?
+                    .join(&new_filename),
+            )?;
+        }
+    }
+    Ok(())
 }
