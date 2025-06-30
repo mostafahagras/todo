@@ -5,14 +5,14 @@ mod sync;
 mod update;
 mod utils;
 use crate::{
-    cli::{Cli, Commands},
+    cli::{Cli, Commands, ConfigSubcommand},
     config::{configure, load_config},
     remove::remove,
     sync::{sync, unsync},
     update::update,
-    utils::{get_cwd_todo_dir, get_todo_file_path, resolve_editor},
+    utils::{get_config_path, get_cwd_todo_dir, get_todo_file_path, resolve_editor},
 };
-use anyhow::{Result as AnyResult, anyhow};
+use anyhow::{anyhow, Result as AnyResult};
 use clap::Parser;
 use std::{fs, io, process::Command};
 use which::which;
@@ -36,8 +36,20 @@ fn main() -> AnyResult<()> {
                 }
                 Ok(())
             }
-            Commands::Config => {
-                configure(true)?;
+            Commands::Config(args) => {
+                match args.action {
+                    Some(ConfigSubcommand::List) => {
+                        let config_path = get_config_path()?;
+                        if config_path.exists() {
+                            println!("{}", fs::read_to_string(config_path)?.trim());
+                        } else {
+                            println!("No configuration file, try running `todo` or `todo config`");
+                        }
+                    }
+                    None => {
+                        configure(true)?;
+                    }
+                };
                 Ok(())
             }
             Commands::Remove(args) => remove(args),

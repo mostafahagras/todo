@@ -28,8 +28,7 @@ pub enum Commands {
     List,
 
     /// Interactive configuration for the todo cli
-    #[command()]
-    Config,
+    Config(ConfigArgs),
 
     /// Removes the todo for the current directory.
     /// Use todo help remove for other options
@@ -55,4 +54,17 @@ pub struct RemoveArgs {
     /// Remove in the current directory recursively
     #[arg(short, long, group = "mode")]
     pub recurse: bool,
+}
+
+#[derive(Debug, Parser)]
+pub struct ConfigArgs {
+    #[command(subcommand)]
+    pub action: Option<ConfigSubcommand>,
+}
+
+#[derive(Debug, Subcommand, Clone)]
+pub enum ConfigSubcommand {
+    /// Show the current config
+    #[command(alias = "show")]
+    List,
 }

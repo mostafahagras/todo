@@ -72,11 +72,9 @@ editor = "$EDITOR" # can be an environment variable or a hardcoded command
 
     - [x] remove
 
-    - [ ] config
+    - [x] config
 
-      - [ ] list
-
-      - [ ] remove
+      - [x] list
 
     - [x] update
 
