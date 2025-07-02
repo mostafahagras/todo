@@ -1,5 +1,5 @@
 use crate::utils::{get_config_path, get_todo_path, update_todos};
-use anyhow::{Result as AnyResult, anyhow};
+use anyhow::{anyhow, Result as AnyResult};
 use inquire::{Select, Text};
 use serde::{Deserialize, Serialize};
 use std::{fs, io, process::exit};
@@ -98,12 +98,13 @@ pub fn configure(user_triggered: bool) -> AnyResult<Config> {
     };
 
     let old_config = load_config()?;
-    if let Some(ref old_config) = old_config {
-        if config == *old_config {
-            println!("ℹ The config wasn't changed");
-            return Ok(config);
-        }
+    if let Some(ref old_config) = old_config
+        && config == *old_config
+    {
+        println!("ℹ The config wasn't changed");
+        return Ok(config);
     }
+
     let config_path = get_config_path()?;
     fs::create_dir_all(config_path.parent().unwrap())
         .map_err(|e| anyhow!("❌ Failed to create config directory: {e}"))?;

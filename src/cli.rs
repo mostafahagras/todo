@@ -38,6 +38,14 @@ pub enum Commands {
     /// Update todo cli
     #[command()]
     Update,
+
+    /// Fuzzily find todos, check them
+    #[command(alias = "done")]
+    Check { query: String },
+
+    /// Fuzzily find todos, uncheck them
+    #[command(alias = "undo")]
+    Uncheck { query: String },
 }
 
 #[derive(Debug, Parser)]

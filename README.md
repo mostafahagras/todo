@@ -78,6 +78,10 @@ editor = "$EDITOR" # can be an environment variable or a hardcoded command
 
     - [x] update
 
+    - [x] check/done
+
+    - [x] uncheck/undo
+
 - [x] Windows support
 
 - [ ] Test on MacOS

@@ -2,7 +2,7 @@ use crate::{
     cli::RemoveArgs,
     utils::{get_cwd_todo_dir, get_todo_file_path, get_todo_path},
 };
-use anyhow::{Result as AnyResult, anyhow};
+use anyhow::{anyhow, Result as AnyResult};
 use inquire::prompt_confirmation;
 use std::fs;
 
@@ -26,12 +26,9 @@ pub fn remove(args: RemoveArgs) -> AnyResult<()> {
                 .map_err(|e| anyhow!("❌ Failed to remove todos recursively: {e}"))?;
             println!("✅ Todos deleted recursively in this directory and subdirectories.");
         }
-    } else {
-        if prompt_confirmation("Are you sure you want to delete the todo for this folder?")? {
-            fs::remove_file(&file_path)
-                .map_err(|e| anyhow!("❌ Failed to remove todo file: {e}"))?;
-            println!("✅ Todo deleted for this folder.");
-        }
+    } else if prompt_confirmation("Are you sure you want to delete the todo for this folder?")? {
+        fs::remove_file(&file_path).map_err(|e| anyhow!("❌ Failed to remove todo file: {e}"))?;
+        println!("✅ Todo deleted for this folder.");
     }
     Ok(())
 }

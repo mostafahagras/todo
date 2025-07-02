@@ -2,6 +2,7 @@ mod cli;
 mod config;
 mod remove;
 mod sync;
+mod todo_ops;
 mod update;
 mod utils;
 use crate::{
@@ -9,6 +10,7 @@ use crate::{
     config::{configure, load_config},
     remove::remove,
     sync::{sync, unsync},
+    todo_ops::{check, uncheck},
     update::update,
     utils::{get_config_path, get_cwd_todo_dir, get_todo_file_path, resolve_editor},
 };
@@ -24,6 +26,8 @@ fn main() -> AnyResult<()> {
             Commands::Update => update(),
             Commands::Sync => sync(get_todo_file_path()?),
             Commands::Unsync => unsync(get_todo_file_path()?),
+            Commands::Check { query } => check(query),
+            Commands::Uncheck { query } => uncheck(query),
             Commands::List => {
                 match fs::read_to_string(get_todo_file_path()?) {
                     Ok(content) => println!("{}", content.trim()),

@@ -1,5 +1,5 @@
-use crate::config::{Config, load_config};
-use anyhow::{Result as AnyResult, anyhow};
+use crate::config::{load_config, Config};
+use anyhow::{anyhow, Result as AnyResult};
 use std::{env, fs, path::PathBuf};
 
 pub fn get_home_dir() -> AnyResult<PathBuf> {
@@ -30,8 +30,7 @@ pub fn get_todo_file_path() -> AnyResult<PathBuf> {
 }
 
 pub fn resolve_editor(editor: String) -> AnyResult<String> {
-    if editor.starts_with("$") {
-        let var = &editor[1..];
+    if let Some(var) = editor.strip_prefix("$") {
         env::var(var).map_err(|_| {
             anyhow!(
                 "❌ Environment variable `{var}` is not set. Please set it or update your config."
