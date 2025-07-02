@@ -24,13 +24,15 @@ For windows, `%USERPROFILE%\.todo\todos\`
 Usage: todo [COMMAND]
 
 Commands:
-  sync    Create a hard link to this directory's todo file in the current directory
-  unsync  Undo the sync command
-  list    List the todos for the current directory
-  config  Interactive configuration for the todo cli
-  remove  Removes the todo for the current directory. Use todo help remove for other options
-  update  Update todo cli
-  help    Print this message or the help of the given subcommand(s)
+  sync     Create a hard link to this directory's todo file in the current directory
+  unsync   Undo the sync command
+  list     List the todos for the current directory
+  config   Interactive configuration for the todo cli
+  remove   Removes the todo for the current directory. Use todo help remove for other options
+  update   Update todo cli
+  check    Fuzzily find todos, check them
+  uncheck  Fuzzily find todos, uncheck them
+  help     Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
