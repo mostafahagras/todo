@@ -21,7 +21,7 @@ pub fn unsync(original: PathBuf) -> AnyResult<()> {
     let synced_path = original
         .file_name()
         .ok_or_else(|| anyhow!("Invalid path"))?;
-    if PathBuf::from(synced_path).exists() {
+    if !PathBuf::from(synced_path).exists() {
         // if !fs::exists(synced_path)? {
         println!("⚠️ {original:?} is not synced");
         return Ok(());
