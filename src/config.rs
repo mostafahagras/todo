@@ -83,24 +83,32 @@ pub fn configure(user_triggered: bool) -> AnyResult<Config> {
         .map_err(|e| anyhow!("❌ Prompt failed: {e}"))?;
     let config = match choice.chars().next().unwrap() {
         '1' => Config::default(),
-        '2' => Config {
-            filename: Text::new("Filename:")
-                .with_default("todo")
-                .prompt()
-                .map_err(|e| anyhow!("❌ Failed to get filename: {e}"))?,
-            extension: Text::new("Extension:")
-                .with_default(".md")
-                .prompt()
-                .map_err(|e| anyhow!("❌ Failed to get extension: {e}"))?,
-            editor: Text::new("Editor:")
-                .with_default("$EDITOR")
-                .prompt()
-                .map_err(|e| anyhow!("❌ Failed to get editor: {e}"))?,
-            flags: Text::new("Editor flags:")
-                .prompt()
-                .map(|s| s.split_whitespace().map(|s| s.to_string()).collect())
-                .map_err(|e| anyhow!("Failed to get editor flags: {e}"))?,
-        },
+        '2' => {
+            let old_config = if user_triggered {
+                load_config()?.unwrap_or_default()
+            } else {
+                Default::default()
+            };
+            Config {
+                filename: Text::new("Filename:")
+                    .with_default(&old_config.filename)
+                    .prompt()
+                    .map_err(|e| anyhow!("❌ Failed to get filename: {e}"))?,
+                extension: Text::new("Extension:")
+                    .with_default(&old_config.extension)
+                    .prompt()
+                    .map_err(|e| anyhow!("❌ Failed to get extension: {e}"))?,
+                editor: Text::new("Editor:")
+                    .with_default(&old_config.editor)
+                    .prompt()
+                    .map_err(|e| anyhow!("❌ Failed to get editor: {e}"))?,
+                flags: Text::new("Editor flags:")
+                    .with_default(&old_config.flags.join(" "))
+                    .prompt()
+                    .map(|s| s.split_whitespace().map(|s| s.to_string()).collect())
+                    .map_err(|e| anyhow!("Failed to get editor flags: {e}"))?,
+            }
+        }
         '3' => exit(0),
         _ => unreachable!("❌ No such option selected."),
     };
