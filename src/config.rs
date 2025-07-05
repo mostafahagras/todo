@@ -9,6 +9,7 @@ struct RawConfig {
     filename: Option<String>,
     extension: Option<String>,
     editor: Option<String>,
+    flags: Option<Vec<String>>,
 }
 
 impl Default for RawConfig {
@@ -17,6 +18,7 @@ impl Default for RawConfig {
             filename: Some("todo".into()),
             extension: Some(".md".into()),
             editor: Some("$EDITOR".into()),
+            flags: Some(Vec::new()),
         }
     }
 }
@@ -26,6 +28,7 @@ pub struct Config {
     pub filename: String,
     pub extension: String,
     pub editor: String,
+    pub flags: Vec<String>,
 }
 
 impl Default for Config {
@@ -46,6 +49,7 @@ impl From<RawConfig> for Config {
             filename: value.filename.unwrap_or("todo".into()),
             extension: value.extension.unwrap_or(".md".into()),
             editor: value.editor.unwrap_or("$EDITOR".into()),
+            flags: value.flags.unwrap_or_default(),
         }
     }
 }
@@ -92,6 +96,10 @@ pub fn configure(user_triggered: bool) -> AnyResult<Config> {
                 .with_default("$EDITOR")
                 .prompt()
                 .map_err(|e| anyhow!("❌ Failed to get editor: {e}"))?,
+            flags: Text::new("Editor flags:")
+                .prompt()
+                .map(|s| s.split_whitespace().map(|s| s.to_string()).collect())
+                .map_err(|e| anyhow!("Failed to get editor flags: {e}"))?,
         },
         '3' => exit(0),
         _ => unreachable!("❌ No such option selected."),

@@ -72,6 +72,7 @@ fn main() -> AnyResult<()> {
                 which(&editor).map_err(|_| anyhow!("❌ Could not find the editor binary `{editor}`. Please check your config or PATH."))?,
             )
             .arg(get_todo_file_path()?)
+            .args(config.flags)
             .spawn()
             .map_err(|e| anyhow!("❌ Failed to launch editor `{editor}`: {e}"))?
             .wait()
