@@ -33,10 +33,10 @@ pub fn check(query: String) -> AnyResult<()> {
 
     let mut scored: Vec<_> = todos
         .iter()
-        .filter_map(|(i, line, text)| {
+        .filter_map(|(i, _line, text)| {
             matcher
                 .fuzzy_match(text, &query)
-                .map(|score| (score, *i, *line))
+                .map(|score| (score, *i, text))
         })
         .collect();
 
@@ -70,7 +70,7 @@ pub fn check(query: String) -> AnyResult<()> {
                 .filter_map(|sel| {
                     best_matches
                         .iter()
-                        .find(|(_, _, line)| *line == sel)
+                        .find(|(_, _, line)| **line == sel)
                         .map(|(_, idx, _)| *idx)
                 })
                 .collect(),
@@ -128,10 +128,10 @@ pub fn uncheck(query: String) -> AnyResult<()> {
 
     let mut scored: Vec<_> = todos
         .iter()
-        .filter_map(|(i, line, text)| {
+        .filter_map(|(i, _line, text)| {
             matcher
                 .fuzzy_match(text, &query)
-                .map(|score| (score, *i, *line))
+                .map(|score| (score, *i, text))
         })
         .collect();
 
@@ -168,7 +168,7 @@ pub fn uncheck(query: String) -> AnyResult<()> {
                 .filter_map(|sel| {
                     best_matches
                         .iter()
-                        .find(|(_, _, line)| *line == sel)
+                        .find(|(_, _, line)| **line == sel)
                         .map(|(_, idx, _)| *idx)
                 })
                 .collect(),
