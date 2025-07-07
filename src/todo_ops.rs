@@ -1,5 +1,6 @@
 use crate::utils::get_todo_file_path;
 use anyhow::Result as AnyResult;
+use enable_ansi_support::enable_ansi_support;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use inquire::MultiSelect;
 use regex::Regex;
@@ -242,9 +243,19 @@ pub fn search(query: String) -> AnyResult<()> {
         return Ok(());
     }
 
+    let ansi_supported = enable_ansi_support().is_ok();
+
     for (_, indices, todo) in scored {
-        println!("{}", highlight_indices(todo, &indices));
+        println!(
+            "{}",
+            if ansi_supported {
+                highlight_indices(todo, &indices)
+            } else {
+                todo.to_string()
+            }
+        );
     }
+
     Ok(())
 }
 

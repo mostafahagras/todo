@@ -1,4 +1,4 @@
-use std::process::{Command, exit};
+use std::process::{exit, Command};
 
 pub fn update() -> ! {
     let status = Command::new("cargo")
