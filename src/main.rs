@@ -17,6 +17,7 @@ use crate::{
 use anyhow::{anyhow, Result as AnyResult};
 use clap::Parser;
 use std::{fs, io, process::Command};
+use todo_ops::search;
 use which::which;
 
 fn main() -> AnyResult<()> {
@@ -27,6 +28,7 @@ fn main() -> AnyResult<()> {
             Commands::Sync => sync(get_todo_file_path()?),
             Commands::Unsync => unsync(get_todo_file_path()?),
             Commands::Check { query } => check(query),
+            Commands::Search { query } => search(query),
             Commands::Uncheck { query } => uncheck(query),
             Commands::List => {
                 match fs::read_to_string(get_todo_file_path()?) {

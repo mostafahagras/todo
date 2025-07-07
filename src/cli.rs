@@ -39,6 +39,10 @@ pub enum Commands {
     #[command()]
     Update,
 
+    /// Fuzzily find todos
+    #[command(alias = "find")]
+    Search { query: String },
+
     /// Fuzzily find todos, check them
     #[command(alias = "done")]
     Check { query: String },

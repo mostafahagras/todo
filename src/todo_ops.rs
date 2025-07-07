@@ -197,3 +197,55 @@ pub fn uncheck(query: String) -> AnyResult<()> {
     println!("Unchecked {} todo(s).", to_uncheck.len());
     Ok(())
 }
+
+pub fn search(query: String) -> AnyResult<()> {
+    let content = fs::read_to_string(get_todo_file_path()?)?;
+    let todo_regex = Regex::new(r"^\s*[-*+]? ?\[( |x)\](.+)$").unwrap();
+    let matcher = SkimMatcherV2::default();
+
+    let todos: Vec<(usize, &str, String)> = content
+        .lines()
+        .enumerate()
+        .filter_map(|(i, line)| {
+            todo_regex.captures(line).map(|caps| {
+                let text = caps.get(2).unwrap().as_str().trim().to_string();
+                (i, line, text)
+            })
+        })
+        .collect();
+
+    if todos.is_empty() {
+        println!("No todos found.");
+        return Ok(());
+    }
+
+    if query.is_empty() {
+        println!("No query entered. Aborting.");
+        return Ok(());
+    }
+
+    let mut scored: Vec<_> = todos
+        .iter()
+        .filter_map(|(i, line, text)| {
+            matcher
+                .fuzzy_match(text, &query)
+                .map(|score| (score, *i, line))
+        })
+        .collect();
+
+    if scored.is_empty() {
+        println!("No matching todos.");
+        return Ok(());
+    }
+
+    scored.sort_by(|a, b| b.0.cmp(&a.0));
+    let best_score = scored[0].0;
+
+    for (_, _, todo) in scored
+        .into_iter()
+        .filter(|(score, _, _)| *score == best_score)
+    {
+        println!("{todo}");
+    }
+    Ok(())
+}

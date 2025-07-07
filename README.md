@@ -30,6 +30,7 @@ Commands:
   config   Interactive configuration for the todo cli
   remove   Removes the todo for the current directory. Use todo help remove for other options
   update   Update todo cli
+  search   Fuzzily find todos
   check    Fuzzily find todos, check them
   uncheck  Fuzzily find todos, uncheck them
   help     Print this message or the help of the given subcommand(s)
@@ -80,6 +81,8 @@ editor = "$EDITOR" # can be an environment variable or a hardcoded command
       - [x] list
 
     - [x] update
+
+    - [x] search
 
     - [x] check/done
 
