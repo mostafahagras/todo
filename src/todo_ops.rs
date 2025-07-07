@@ -1,10 +1,21 @@
 use crate::utils::get_todo_file_path;
 use anyhow::Result as AnyResult;
+use crossterm::{
+    cursor,
+    event::{read, Event, KeyCode},
+    execute,
+    terminal::{
+        self, disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
+};
 use enable_ansi_support::enable_ansi_support;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use inquire::MultiSelect;
 use regex::Regex;
+use std::collections::HashSet;
 use std::fs::{self, write};
+use std::io::{stdout, Write};
 
 pub fn check(query: String, all: bool) -> AnyResult<()> {
     let content = fs::read_to_string(get_todo_file_path()?)?;
@@ -249,8 +260,7 @@ pub fn search(query: String) -> AnyResult<()> {
     }
 
     if query.is_empty() {
-        println!("No query entered. Aborting.");
-        return Ok(());
+        return live_search(todos);
     }
 
     let scored: Vec<_> = todos
@@ -289,7 +299,6 @@ pub fn search(query: String) -> AnyResult<()> {
 }
 
 fn highlight_indices(input: &str, indices: &[usize]) -> String {
-    use std::collections::HashSet;
     let indices_set: HashSet<_> = indices.iter().copied().collect();
 
     input
@@ -303,4 +312,74 @@ fn highlight_indices(input: &str, indices: &[usize]) -> String {
             }
         })
         .collect::<String>()
+}
+
+fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
+    let mut stdout = stdout();
+    enable_raw_mode()?;
+    execute!(stdout, EnterAlternateScreen)?;
+
+    let mut query = String::new();
+    let matcher = SkimMatcherV2::default();
+
+    loop {
+        let (_, rows) = terminal::size()?;
+        let search_line = rows - 1;
+        let max_results = (rows - 1).min(items.len() as u16);
+
+        let mut matches: Vec<_> = items
+            .iter()
+            .filter_map(|(line, text)| {
+                matcher.fuzzy_indices(text, &query).map(|(score, indices)| {
+                    let offset = line.strip_suffix(text).unwrap_or_default().len();
+                    let indices = indices
+                        .iter()
+                        .map(|idx| idx + offset)
+                        .collect::<Vec<usize>>();
+                    (score, indices, line)
+                })
+            })
+            .collect();
+
+        matches.sort_by(|a, b| b.0.cmp(&a.0));
+
+        execute!(stdout, Clear(ClearType::All))?;
+        // for i in 0..=max_results {
+        //     execute!(
+        //         stdout,
+        //         cursor::MoveTo(0, search_line - i),
+        //         Clear(ClearType::CurrentLine)
+        //     )?;
+        // }
+
+        for (i, (_, indices, item)) in matches.iter().take(max_results as usize).enumerate() {
+            let line = search_line - 1 - i as u16;
+            execute!(stdout, cursor::MoveTo(0, line))?;
+            print!("{:<1$}", highlight_indices(item, indices), 40);
+        }
+
+        execute!(stdout, cursor::MoveTo(0, search_line))?;
+        print!("Search: {}", query);
+
+        stdout.flush()?;
+
+        if let Event::Key(key_event) = read()? {
+            match key_event.code {
+                KeyCode::Char(c) => query.push(c),
+                KeyCode::Backspace => {
+                    query.pop();
+                }
+                KeyCode::Enter => {
+                    break;
+                }
+                KeyCode::Esc => {
+                    break;
+                }
+                _ => {}
+            }
+        }
+    }
+    disable_raw_mode()?;
+    execute!(stdout, LeaveAlternateScreen)?;
+    Ok(())
 }

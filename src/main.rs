@@ -28,7 +28,7 @@ fn main() -> AnyResult<()> {
             Commands::Sync => sync(get_todo_file_path()?),
             Commands::Unsync => unsync(get_todo_file_path()?),
             Commands::Check { query, all } => check(query.unwrap_or_default(), all),
-            Commands::Search { query } => search(query),
+            Commands::Search { query } => search(query.unwrap_or_default()),
             Commands::Uncheck { query, all } => uncheck(query.unwrap_or_default(), all),
             Commands::List => {
                 match fs::read_to_string(get_todo_file_path()?) {
