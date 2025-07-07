@@ -1,6 +1,6 @@
 [package]
 name = "to-dos"
-version = "0.9.2"
+version = "0.10.0"
 edition = "2021"
 description = "An easy way to manage your todos"
 license = "MIT"

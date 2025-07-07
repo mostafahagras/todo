@@ -30,14 +30,16 @@ pub fn check(query: String, all: bool) -> AnyResult<()> {
     let to_check: Vec<usize> = if all {
         todos.iter().map(|(i, _, _)| *i).collect()
     } else if query.is_empty() {
-        // No query and not all: prompt user to select from all unchecked todos
         let options: Vec<_> = todos.iter().map(|(_, _, text)| text.clone()).collect();
         let choices = MultiSelect::new("Select todo(s) to check:", options).prompt();
         match choices {
             Ok(selected) => selected
                 .into_iter()
                 .filter_map(|sel| {
-                    todos.iter().find(|(_, _, text)| *text == sel).map(|(i, _, _)| *i)
+                    todos
+                        .iter()
+                        .find(|(_, _, text)| *text == sel)
+                        .map(|(i, _, _)| *i)
                 })
                 .collect(),
             Err(_) => vec![],
@@ -74,7 +76,8 @@ pub fn check(query: String, all: bool) -> AnyResult<()> {
                 .collect();
 
             let choices =
-                MultiSelect::new("Multiple matches found. Select todo(s) to check:", options).prompt();
+                MultiSelect::new("Multiple matches found. Select todo(s) to check:", options)
+                    .prompt();
 
             match choices {
                 Ok(selected) => selected
@@ -137,14 +140,16 @@ pub fn uncheck(query: String, all: bool) -> AnyResult<()> {
     let to_uncheck: Vec<usize> = if all {
         todos.iter().map(|(i, _, _)| *i).collect()
     } else if query.is_empty() {
-        // No query and not all: prompt user to select from all checked todos
         let options: Vec<_> = todos.iter().map(|(_, _, text)| text.clone()).collect();
         let choices = MultiSelect::new("Select todo(s) to uncheck:", options).prompt();
         match choices {
             Ok(selected) => selected
                 .into_iter()
                 .filter_map(|sel| {
-                    todos.iter().find(|(_, _, text)| *text == sel).map(|(i, _, _)| *i)
+                    todos
+                        .iter()
+                        .find(|(_, _, text)| *text == sel)
+                        .map(|(i, _, _)| *i)
                 })
                 .collect(),
             Err(_) => vec![],
