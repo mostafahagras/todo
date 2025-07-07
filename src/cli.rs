@@ -45,11 +45,21 @@ pub enum Commands {
 
     /// Fuzzily find todos, check them
     #[command(alias = "done")]
-    Check { query: String },
+    Check {
+        query: Option<String>,
+        /// Check all todos
+        #[arg(short, long)]
+        all: bool,
+    },
 
     /// Fuzzily find todos, uncheck them
     #[command(alias = "undo")]
-    Uncheck { query: String },
+    Uncheck {
+        query: Option<String>,
+        /// Uncheck all todos
+        #[arg(short, long)]
+        all: bool,
+    },
 }
 
 #[derive(Debug, Parser)]

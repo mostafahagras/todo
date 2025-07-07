@@ -6,7 +6,7 @@ use inquire::MultiSelect;
 use regex::Regex;
 use std::fs::{self, write};
 
-pub fn check(query: String) -> AnyResult<()> {
+pub fn check(query: String, all: bool) -> AnyResult<()> {
     let content = fs::read_to_string(get_todo_file_path()?)?;
     let todo_regex = Regex::new(r"^\s*[-*+]? ?\[ \](.+)$").unwrap();
     let matcher = SkimMatcherV2::default();
@@ -27,55 +27,58 @@ pub fn check(query: String) -> AnyResult<()> {
         return Ok(());
     }
 
-    if query.is_empty() {
-        println!("No query entered. Aborting.");
-        return Ok(());
-    }
-
-    let mut scored: Vec<_> = todos
-        .iter()
-        .filter_map(|(i, _line, text)| {
-            matcher
-                .fuzzy_match(text, &query)
-                .map(|score| (score, *i, text))
-        })
-        .collect();
-
-    if scored.is_empty() {
-        println!("No matching todos.");
-        return Ok(());
-    }
-
-    scored.sort_by(|a, b| b.0.cmp(&a.0));
-    let best_score = scored[0].0;
-
-    let best_matches: Vec<_> = scored
-        .into_iter()
-        .filter(|(score, _, _)| *score == best_score)
-        .collect();
-
-    let to_check: Vec<usize> = if best_matches.len() == 1 {
-        vec![best_matches[0].1]
+    let to_check: Vec<usize> = if all {
+        todos.iter().map(|(i, _, _)| *i).collect()
     } else {
-        let options: Vec<_> = best_matches
+        if query.is_empty() {
+            println!("No query entered. Aborting.");
+            return Ok(());
+        }
+        let mut scored: Vec<_> = todos
             .iter()
-            .map(|(_, _, line)| line.to_string())
+            .filter_map(|(i, _line, text)| {
+                matcher
+                    .fuzzy_match(text, &query)
+                    .map(|score| (score, *i, text))
+            })
             .collect();
 
-        let choices =
-            MultiSelect::new("Multiple matches found. Select todo(s) to check:", options).prompt();
+        if scored.is_empty() {
+            println!("No matching todos.");
+            return Ok(());
+        }
 
-        match choices {
-            Ok(selected) => selected
-                .into_iter()
-                .filter_map(|sel| {
-                    best_matches
-                        .iter()
-                        .find(|(_, _, line)| **line == sel)
-                        .map(|(_, idx, _)| *idx)
-                })
-                .collect(),
-            Err(_) => vec![],
+        scored.sort_by(|a, b| b.0.cmp(&a.0));
+        let best_score = scored[0].0;
+
+        let best_matches: Vec<_> = scored
+            .into_iter()
+            .filter(|(score, _, _)| *score == best_score)
+            .collect();
+
+        if best_matches.len() == 1 {
+            vec![best_matches[0].1]
+        } else {
+            let options: Vec<_> = best_matches
+                .iter()
+                .map(|(_, _, line)| line.to_string())
+                .collect();
+
+            let choices =
+                MultiSelect::new("Multiple matches found. Select todo(s) to check:", options).prompt();
+
+            match choices {
+                Ok(selected) => selected
+                    .into_iter()
+                    .filter_map(|sel| {
+                        best_matches
+                            .iter()
+                            .find(|(_, _, line)| **line == sel)
+                            .map(|(_, idx, _)| *idx)
+                    })
+                    .collect(),
+                Err(_) => vec![],
+            }
         }
     };
 
@@ -101,7 +104,7 @@ pub fn check(query: String) -> AnyResult<()> {
     Ok(())
 }
 
-pub fn uncheck(query: String) -> AnyResult<()> {
+pub fn uncheck(query: String, all: bool) -> AnyResult<()> {
     let content = fs::read_to_string(get_todo_file_path()?)?;
     let todo_regex = Regex::new(r"^\s*[-*+]? ?\[x\](.+)$").unwrap();
     let matcher = SkimMatcherV2::default();
@@ -122,58 +125,61 @@ pub fn uncheck(query: String) -> AnyResult<()> {
         return Ok(());
     }
 
-    if query.is_empty() {
-        println!("No query entered. Aborting.");
-        return Ok(());
-    }
-
-    let mut scored: Vec<_> = todos
-        .iter()
-        .filter_map(|(i, _line, text)| {
-            matcher
-                .fuzzy_match(text, &query)
-                .map(|score| (score, *i, text))
-        })
-        .collect();
-
-    if scored.is_empty() {
-        println!("No matching todos.");
-        return Ok(());
-    }
-
-    scored.sort_by(|a, b| b.0.cmp(&a.0));
-    let best_score = scored[0].0;
-
-    let best_matches: Vec<_> = scored
-        .into_iter()
-        .filter(|(score, _, _)| *score == best_score)
-        .collect();
-
-    let to_uncheck: Vec<usize> = if best_matches.len() == 1 {
-        vec![best_matches[0].1]
+    let to_uncheck: Vec<usize> = if all {
+        todos.iter().map(|(i, _, _)| *i).collect()
     } else {
-        let options: Vec<_> = best_matches
+        if query.is_empty() {
+            println!("No query entered. Aborting.");
+            return Ok(());
+        }
+        let mut scored: Vec<_> = todos
             .iter()
-            .map(|(_, _, line)| line.to_string())
+            .filter_map(|(i, _line, text)| {
+                matcher
+                    .fuzzy_match(text, &query)
+                    .map(|score| (score, *i, text))
+            })
             .collect();
 
-        let choices = MultiSelect::new(
-            "Multiple matches found. Select todo(s) to uncheck:",
-            options,
-        )
-        .prompt();
+        if scored.is_empty() {
+            println!("No matching todos.");
+            return Ok(());
+        }
 
-        match choices {
-            Ok(selected) => selected
-                .into_iter()
-                .filter_map(|sel| {
-                    best_matches
-                        .iter()
-                        .find(|(_, _, line)| **line == sel)
-                        .map(|(_, idx, _)| *idx)
-                })
-                .collect(),
-            Err(_) => vec![],
+        scored.sort_by(|a, b| b.0.cmp(&a.0));
+        let best_score = scored[0].0;
+
+        let best_matches: Vec<_> = scored
+            .into_iter()
+            .filter(|(score, _, _)| *score == best_score)
+            .collect();
+
+        if best_matches.len() == 1 {
+            vec![best_matches[0].1]
+        } else {
+            let options: Vec<_> = best_matches
+                .iter()
+                .map(|(_, _, line)| line.to_string())
+                .collect();
+
+            let choices = MultiSelect::new(
+                "Multiple matches found. Select todo(s) to uncheck:",
+                options,
+            )
+            .prompt();
+
+            match choices {
+                Ok(selected) => selected
+                    .into_iter()
+                    .filter_map(|sel| {
+                        best_matches
+                            .iter()
+                            .find(|(_, _, line)| **line == sel)
+                            .map(|(_, idx, _)| *idx)
+                    })
+                    .collect(),
+                Err(_) => vec![],
+            }
         }
     };
 
