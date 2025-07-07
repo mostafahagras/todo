@@ -203,13 +203,12 @@ pub fn search(query: String) -> AnyResult<()> {
     let todo_regex = Regex::new(r"^\s*[-*+]? ?\[( |x)\](.+)$").unwrap();
     let matcher = SkimMatcherV2::default();
 
-    let todos: Vec<(usize, &str, String)> = content
+    let todos: Vec<(&str, String)> = content
         .lines()
-        .enumerate()
-        .filter_map(|(i, line)| {
+        .filter_map(|line| {
             todo_regex.captures(line).map(|caps| {
                 let text = caps.get(2).unwrap().as_str().trim().to_string();
-                (i, line, text)
+                (line.trim_end(), text)
             })
         })
         .collect();
@@ -224,12 +223,17 @@ pub fn search(query: String) -> AnyResult<()> {
         return Ok(());
     }
 
-    let mut scored: Vec<_> = todos
+    let scored: Vec<_> = todos
         .iter()
-        .filter_map(|(i, line, text)| {
-            matcher
-                .fuzzy_match(text, &query)
-                .map(|score| (score, *i, line))
+        .filter_map(|(line, text)| {
+            matcher.fuzzy_indices(text, &query).map(|(score, indices)| {
+                let offset = line.strip_suffix(text).unwrap_or_default().len();
+                let indices = indices
+                    .iter()
+                    .map(|idx| idx + offset)
+                    .collect::<Vec<usize>>();
+                (score, indices, line)
+            })
         })
         .collect();
 
@@ -238,14 +242,25 @@ pub fn search(query: String) -> AnyResult<()> {
         return Ok(());
     }
 
-    scored.sort_by(|a, b| b.0.cmp(&a.0));
-    let best_score = scored[0].0;
-
-    for (_, _, todo) in scored
-        .into_iter()
-        .filter(|(score, _, _)| *score == best_score)
-    {
-        println!("{todo}");
+    for (_, indices, todo) in scored {
+        println!("{}", highlight_indices(todo, &indices));
     }
     Ok(())
+}
+
+fn highlight_indices(input: &str, indices: &[usize]) -> String {
+    use std::collections::HashSet;
+    let indices_set: HashSet<_> = indices.iter().copied().collect();
+
+    input
+        .chars()
+        .enumerate()
+        .map(|(i, c)| {
+            if indices_set.contains(&i) {
+                format!("\x1b[1;31m{}\x1b[0m", c) // bold red
+            } else {
+                c.to_string()
+            }
+        })
+        .collect::<String>()
 }
