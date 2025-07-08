@@ -65,30 +65,17 @@ editor = "$EDITOR" # can be an environment variable or a hardcoded command
 ## To-dos:
 
 - [x] Publish on crates.io
-
 - [x] Configure editor (defaults to `$EDITOR`)
-
 - [x] Configure file type (defaults to markdown)
-
 - [ ] Sub-commands, args
-
     - [x] sync/unsync
-
     - [x] remove
-
     - [x] config
-
       - [x] list
-
     - [x] update
-
     - [x] search
-
     - [x] check/done
-
     - [x] uncheck/undo
-
 - [x] Windows support
-
 - [ ] Test on MacOS
 
