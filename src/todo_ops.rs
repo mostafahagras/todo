@@ -322,7 +322,7 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
     let mut query = String::new();
     let matcher = SkimMatcherV2::default();
 
-    loop {
+    'search: loop {
         let (_, rows) = terminal::size()?;
         let search_line = rows - 1;
         let max_results = (rows - 1).min(items.len() as u16);
@@ -344,13 +344,6 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
         matches.sort_by(|a, b| b.0.cmp(&a.0));
 
         execute!(stdout, Clear(ClearType::All))?;
-        // for i in 0..=max_results {
-        //     execute!(
-        //         stdout,
-        //         cursor::MoveTo(0, search_line - i),
-        //         Clear(ClearType::CurrentLine)
-        //     )?;
-        // }
 
         for (i, (_, indices, item)) in matches.iter().take(max_results as usize).enumerate() {
             let line = search_line - 1 - i as u16;
@@ -363,17 +356,21 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
 
         stdout.flush()?;
 
-        if let Event::Key(key_event) = read()? {
+        while let Event::Key(key_event) = read()? {
             match key_event.code {
-                KeyCode::Char(c) => query.push(c),
-                KeyCode::Backspace => {
+                KeyCode::Char(c) => {
+                    query.push(c);
+                    break;
+                }
+                KeyCode::Backspace if !query.is_empty() => {
                     query.pop();
+                    break;
                 }
                 KeyCode::Enter => {
-                    break;
+                    break 'search;
                 }
                 KeyCode::Esc => {
-                    break;
+                    break 'search;
                 }
                 _ => {}
             }

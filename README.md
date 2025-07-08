@@ -57,9 +57,7 @@ editor = "$EDITOR" # can be an environment variable or a hardcoded command
 ### Note: 
 
 - On **Windows**, `$EDITOR` isn't set to anything, you can
-    
     - Set it globally (`setx EDITOR notepad`)
-
     - Change the `editor` in the config
 
 ## To-dos:
