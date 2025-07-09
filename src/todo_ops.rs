@@ -357,6 +357,9 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
         stdout.flush()?;
 
         while let Event::Key(key_event) = read()? {
+            if !key_event.is_press() {
+                continue;
+            }
             match key_event.code {
                 KeyCode::Char(c) => {
                     query.push(c);
