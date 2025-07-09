@@ -1,7 +1,7 @@
 use crate::utils::get_todo_file_path;
 use anyhow::Result as AnyResult;
 use crossterm::{
-    cursor,
+    cursor::{self, Hide, Show},
     event::{read, Event, KeyCode},
     execute,
     terminal::{
@@ -343,7 +343,7 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
 
         matches.sort_by(|a, b| b.0.cmp(&a.0));
 
-        execute!(stdout, Clear(ClearType::All))?;
+        execute!(stdout, Clear(ClearType::All), Hide)?;
 
         for (i, (_, indices, item)) in matches.iter().take(max_results as usize).enumerate() {
             let line = search_line - 1 - i as u16;
@@ -351,7 +351,7 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
             print!("{:<1$}", highlight_indices(item, indices), 40);
         }
 
-        execute!(stdout, cursor::MoveTo(0, search_line))?;
+        execute!(stdout, cursor::MoveTo(0, search_line), Show)?;
         print!("Search: {}", query);
 
         stdout.flush()?;
