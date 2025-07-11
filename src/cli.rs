@@ -30,10 +30,10 @@ pub enum Commands {
     /// Interactive configuration for the todo cli
     Config(ConfigArgs),
 
-    /// Removes the todo for the current directory.
+    /// Deletes the todo file for the current directory.
     /// Use todo help remove for other options
-    #[command(alias = "rm")]
-    Remove(RemoveArgs),
+    #[command(alias = "d")]
+    Delete(DeleteArgs),
 
     /// Update todo cli
     #[command()]
@@ -60,6 +60,15 @@ pub enum Commands {
         #[arg(short, long)]
         all: bool,
     },
+
+    /// Fuzzily find todos, remove them
+    #[command(alias = "rm")]
+    Remove {
+        query: Option<String>,
+        /// Remove all todos without deleting the file
+        #[arg(short, long)]
+        all: bool,
+    },
 }
 
 #[derive(Debug, Parser)]
@@ -68,7 +77,7 @@ pub enum Commands {
         .required(false)
         .args(["all", "recurse"])
 ))]
-pub struct RemoveArgs {
+pub struct DeleteArgs {
     /// Remove all todos.
     #[arg(short, long, group = "mode")]
     pub all: bool,

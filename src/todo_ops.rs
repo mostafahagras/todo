@@ -239,6 +239,105 @@ pub fn uncheck(query: String, all: bool) -> AnyResult<()> {
     Ok(())
 }
 
+pub fn remove(query: String, all: bool) -> AnyResult<()> {
+    let content = fs::read_to_string(get_todo_file_path()?)?;
+    let todo_regex = Regex::new(r"^\s*[-*+]? ?\[[ x]\](.+)$").unwrap();
+    let matcher = SkimMatcherV2::default();
+
+    let todos: Vec<(usize, String)> = content
+        .lines()
+        .enumerate()
+        .filter_map(|(i, line)| {
+            todo_regex.captures(line).map(|caps| {
+                let text = caps.get(1).unwrap().as_str().trim().to_string();
+                (i, text)
+            })
+        })
+        .collect();
+
+    if todos.is_empty() {
+        println!("No todos found.");
+        return Ok(());
+    }
+
+    let to_remove: Vec<usize> = if all {
+        todos.iter().map(|(i, _)| *i).collect()
+    } else if query.is_empty() {
+        let options: Vec<_> = todos.iter().map(|(_, text)| text.clone()).collect();
+        let choices = MultiSelect::new("Select todo(s) to remove:", options).prompt();
+        match choices {
+            Ok(selected) => selected
+                .into_iter()
+                .filter_map(|sel| todos.iter().find(|(_, text)| *text == sel).map(|(i, _)| *i))
+                .collect(),
+            Err(_) => vec![],
+        }
+    } else {
+        let mut scored: Vec<_> = todos
+            .iter()
+            .filter_map(|(i, text)| {
+                matcher
+                    .fuzzy_match(text, &query)
+                    .map(|score| (score, *i, text))
+            })
+            .collect();
+
+        if scored.is_empty() {
+            println!("No matching todos.");
+            return Ok(());
+        }
+
+        scored.sort_by(|a, b| b.0.cmp(&a.0));
+        let best_score = scored[0].0;
+
+        let best_matches: Vec<_> = scored
+            .into_iter()
+            .filter(|(score, _, _)| *score == best_score)
+            .collect();
+
+        if best_matches.len() == 1 {
+            vec![best_matches[0].1]
+        } else {
+            let options: Vec<_> = best_matches
+                .iter()
+                .map(|(_, _, line)| line.to_string())
+                .collect();
+
+            let choices =
+                MultiSelect::new("Multiple matches found. Select todo(s) to remove:", options)
+                    .prompt();
+
+            match choices {
+                Ok(selected) => selected
+                    .into_iter()
+                    .filter_map(|sel| {
+                        best_matches
+                            .iter()
+                            .find(|(_, _, line)| **line == sel)
+                            .map(|(_, idx, _)| *idx)
+                    })
+                    .collect(),
+                Err(_) => vec![],
+            }
+        }
+    };
+
+    if to_remove.is_empty() {
+        println!("No todos selected.");
+        return Ok(());
+    }
+
+    let updated: Vec<_> = content
+        .lines()
+        .enumerate()
+        .filter(|(i, _)| !to_remove.contains(i))
+        .map(|(_, line)| line.to_string())
+        .collect();
+
+    write(get_todo_file_path()?, updated.join("\n"))?;
+    println!("Removed {} todo(s).", to_remove.len());
+    Ok(())
+}
 pub fn search(query: String) -> AnyResult<()> {
     let content = fs::read_to_string(get_todo_file_path()?)?;
     let todo_regex = Regex::new(r"^\s*[-*+]? ?\[( |x)\](.+)$").unwrap();

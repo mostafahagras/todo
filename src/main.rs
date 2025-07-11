@@ -1,6 +1,6 @@
 mod cli;
 mod config;
-mod remove;
+mod delete;
 mod sync;
 mod todo_ops;
 mod update;
@@ -8,16 +8,15 @@ mod utils;
 use crate::{
     cli::{Cli, Commands, ConfigSubcommand},
     config::{configure, load_config},
-    remove::remove,
+    delete::delete,
     sync::{sync, unsync},
-    todo_ops::{check, uncheck},
+    todo_ops::{check, remove, search, uncheck},
     update::update,
     utils::{get_config_path, get_cwd_todo_dir, get_todo_file_path, resolve_editor},
 };
 use anyhow::{anyhow, Result as AnyResult};
 use clap::Parser;
 use std::{fs, io, process::Command};
-use todo_ops::search;
 use which::which;
 
 fn main() -> AnyResult<()> {
@@ -30,6 +29,7 @@ fn main() -> AnyResult<()> {
             Commands::Check { query, all } => check(query.unwrap_or_default(), all),
             Commands::Search { query } => search(query.unwrap_or_default()),
             Commands::Uncheck { query, all } => uncheck(query.unwrap_or_default(), all),
+            Commands::Remove { query, all } => remove(query.unwrap_or_default(), all),
             Commands::List => {
                 match fs::read_to_string(get_todo_file_path()?) {
                     Ok(content) => println!("{}", content.trim()),
@@ -58,7 +58,7 @@ fn main() -> AnyResult<()> {
                 };
                 Ok(())
             }
-            Commands::Remove(args) => remove(args),
+            Commands::Delete(args) => delete(args),
         },
         None => {
             let cwd_todo_dir = get_cwd_todo_dir()?;
