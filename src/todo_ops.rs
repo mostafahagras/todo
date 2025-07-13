@@ -4,6 +4,7 @@ use crossterm::{
     cursor::{self, Hide, Show},
     event::{read, Event, KeyCode},
     execute,
+    style::{Color, Print, Stylize},
     terminal::{
         self, disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
         LeaveAlternateScreen,
@@ -405,7 +406,7 @@ fn highlight_indices(input: &str, indices: &[usize]) -> String {
         .enumerate()
         .map(|(i, c)| {
             if indices_set.contains(&i) {
-                format!("\x1b[1;31m{}\x1b[0m", c) // bold red
+                format!("{}", c.to_string().bold().with(Color::Red))
             } else {
                 c.to_string()
             }
@@ -422,7 +423,7 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
     let matcher = SkimMatcherV2::default();
 
     'search: loop {
-        let (_, rows) = terminal::size()?;
+        let (cols, rows) = terminal::size()?;
         let search_line = rows - 1;
         let max_results = (rows - 1).min(items.len() as u16);
 
@@ -450,7 +451,15 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
             print!("{:<1$}", highlight_indices(item, indices), 40);
         }
 
+        if cols > (19 + 8 + query.len()) as u16 {
+            execute!(
+                stdout,
+                cursor::MoveTo(cols - 19, search_line),
+                Print("[Esc/Enter to exit]".dim()),
+            )?;
+        }
         execute!(stdout, cursor::MoveTo(0, search_line), Show)?;
+
         print!("Search: {}", query);
 
         stdout.flush()?;
