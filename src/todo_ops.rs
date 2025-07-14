@@ -1,10 +1,10 @@
-use crate::utils::get_todo_file_path;
+use crate::utils::{get_todo_file_path, highlight_indices};
 use anyhow::Result as AnyResult;
 use crossterm::{
     cursor::{self, Hide, Show},
     event::{read, Event, KeyCode},
     execute,
-    style::{Color, Print, Stylize},
+    style::{Print, Stylize},
     terminal::{
         self, disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
         LeaveAlternateScreen,
@@ -14,7 +14,6 @@ use enable_ansi_support::enable_ansi_support;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use inquire::MultiSelect;
 use regex::Regex;
-use std::collections::HashSet;
 use std::fs::{self, write};
 use std::io::{stdout, Write};
 
@@ -398,22 +397,6 @@ pub fn search(query: String) -> AnyResult<()> {
     Ok(())
 }
 
-fn highlight_indices(input: &str, indices: &[usize]) -> String {
-    let indices_set: HashSet<_> = indices.iter().copied().collect();
-
-    input
-        .chars()
-        .enumerate()
-        .map(|(i, c)| {
-            if indices_set.contains(&i) {
-                format!("{}", c.to_string().bold().with(Color::Red))
-            } else {
-                c.to_string()
-            }
-        })
-        .collect::<String>()
-}
-
 fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
     let mut stdout = stdout();
     enable_raw_mode()?;
@@ -448,7 +431,7 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
         for (i, (_, indices, item)) in matches.iter().take(max_results as usize).enumerate() {
             let line = search_line - 1 - i as u16;
             execute!(stdout, cursor::MoveTo(0, line))?;
-            print!("{:<1$}", highlight_indices(item, indices), 40);
+            print!("{}", highlight_indices(item, indices));
         }
 
         if cols > (19 + 8 + query.len()) as u16 {

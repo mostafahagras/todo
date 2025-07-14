@@ -1,6 +1,7 @@
 use crate::config::{load_config, Config};
 use anyhow::{anyhow, Result as AnyResult};
-use std::{env, fs, path::PathBuf};
+use crossterm::style::{Color, Stylize};
+use std::{collections::HashSet, env, fs, path::PathBuf};
 
 pub fn get_home_dir() -> AnyResult<PathBuf> {
     env::home_dir().ok_or_else(|| {
@@ -58,4 +59,20 @@ pub fn update_todos(dir: PathBuf, new_config: &Config) -> AnyResult<()> {
         }
     }
     Ok(())
+}
+
+pub fn highlight_indices(input: &str, indices: &[usize]) -> String {
+    let indices_set: HashSet<_> = indices.iter().copied().collect();
+
+    input
+        .chars()
+        .enumerate()
+        .map(|(i, c)| {
+            if indices_set.contains(&i) {
+                format!("{}", c.to_string().bold().with(Color::Red))
+            } else {
+                c.to_string()
+            }
+        })
+        .collect::<String>()
 }
