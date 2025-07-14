@@ -1,6 +1,6 @@
 [package]
 name = "to-dos"
-version = "0.12.1"
+version = "0.12.2"
 edition = "2021"
 description = "An easy way to manage your todos"
 license = "MIT"
@@ -20,4 +20,5 @@ inquire = "0.7.5"
 regex = "1.11.1"
 serde = { version = "1.0.219", features = ["derive"] }
 toml = "0.8.23"
+unicode-width = "0.2.1"
 which = "8.0.0"

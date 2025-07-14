@@ -15,6 +15,7 @@ use inquire::MultiSelect;
 use regex::Regex;
 use std::fs::{self, write};
 use std::io::{stdout, Write};
+use unicode_width::UnicodeWidthStr;
 
 pub fn check(query: String, all: bool) -> AnyResult<()> {
     let content = fs::read_to_string(get_todo_file_path()?)?;
@@ -380,7 +381,6 @@ pub fn search(query: String) -> AnyResult<()> {
         return Ok(());
     }
 
-
     for (_, indices, todo) in scored {
         println!("{}", highlight_indices(todo, &indices));
     }
@@ -425,7 +425,7 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
             print!("{}", highlight_indices(item, indices));
         }
 
-        if cols > (19 + 8 + query.len()) as u16 {
+        if cols > (19 + 8 + query.width()) as u16 {
             execute!(
                 stdout,
                 cursor::MoveTo(cols - 19, search_line),
