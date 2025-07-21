@@ -69,6 +69,10 @@ pub enum Commands {
         #[arg(short, long)]
         all: bool,
     },
+
+    /// Count the number of todos
+    #[command()]
+    Count(CountArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -98,4 +102,21 @@ pub enum ConfigSubcommand {
     /// Show the current config
     #[command(alias = "show")]
     List,
+}
+
+#[derive(Debug, Parser)]
+pub struct CountArgs {
+    #[command(subcommand)]
+    pub filter: Option<CountSubcommand>,
+}
+
+#[derive(Debug, Parser)]
+pub enum CountSubcommand {
+    /// Count checked todos
+    #[command(alias = "c")]
+    Checked,
+
+    /// Count unchecked todos
+    #[command(alias = "u")]
+    Unchecked,
 }

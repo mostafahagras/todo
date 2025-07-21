@@ -1,5 +1,6 @@
 mod cli;
 mod config;
+mod count;
 mod delete;
 mod sync;
 mod todo_ops;
@@ -16,6 +17,7 @@ use crate::{
 };
 use anyhow::{anyhow, Result as AnyResult};
 use clap::Parser;
+use count::count;
 use std::{fs, io, process::Command};
 use which::which;
 
@@ -42,6 +44,7 @@ fn main() -> AnyResult<()> {
                 }
                 Ok(())
             }
+            Commands::Count(args) => count(args.filter.into()),
             Commands::Config(args) => {
                 match args.action {
                     Some(ConfigSubcommand::List) => {

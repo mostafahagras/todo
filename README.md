@@ -34,6 +34,7 @@ Commands:
   check    Fuzzily find todos, check them
   uncheck  Fuzzily find todos, uncheck them
   remove   Fuzzily find todos, remove them
+  count    Count the number of todos
   help     Print this message or the help of the given subcommand(s)
 
 Options:
