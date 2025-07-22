@@ -434,7 +434,7 @@ fn live_search(items: Vec<(&str, String)>) -> AnyResult<()> {
         }
         execute!(stdout, cursor::MoveTo(0, search_line), Show)?;
 
-        print!("Search: {}", query);
+        print!("Search: {query}");
 
         stdout.flush()?;
 

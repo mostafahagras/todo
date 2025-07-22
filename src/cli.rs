@@ -25,7 +25,7 @@ pub enum Commands {
 
     /// List the todos for the current directory
     #[command(alias = "l")]
-    List,
+    List(ListArgs),
 
     /// Interactive configuration for the todo cli
     Config(ConfigArgs),
@@ -117,6 +117,26 @@ pub enum CountSubcommand {
     Checked,
 
     /// Count unchecked todos
+    #[command(alias = "u")]
+    Unchecked,
+}
+
+#[derive(Debug, Parser)]
+pub struct ListArgs {
+    /// Print the entire todo file
+    #[arg(short, long)]
+    pub raw: bool,
+    #[command(subcommand)]
+    pub filter: Option<ListSubcommand>,
+}
+
+#[derive(Debug, Parser)]
+pub enum ListSubcommand {
+    /// List checked todos
+    #[command(alias = "c")]
+    Checked,
+
+    /// List unchecked todos
     #[command(alias = "u")]
     Unchecked,
 }

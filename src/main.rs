@@ -2,6 +2,7 @@ mod cli;
 mod config;
 mod count;
 mod delete;
+mod list;
 mod sync;
 mod todo_ops;
 mod update;
@@ -18,7 +19,8 @@ use crate::{
 use anyhow::{anyhow, Result as AnyResult};
 use clap::Parser;
 use count::count;
-use std::{fs, io, process::Command};
+use list::list;
+use std::{fs, process::Command};
 use which::which;
 
 fn main() -> AnyResult<()> {
@@ -32,18 +34,7 @@ fn main() -> AnyResult<()> {
             Commands::Search { query } => search(query.unwrap_or_default()),
             Commands::Uncheck { query, all } => uncheck(query.unwrap_or_default(), all),
             Commands::Remove { query, all } => remove(query.unwrap_or_default(), all),
-            Commands::List => {
-                match fs::read_to_string(get_todo_file_path()?) {
-                    Ok(content) => println!("{}", content.trim()),
-                    Err(error) if error.kind() == io::ErrorKind::NotFound => {
-                        return Err(anyhow!(
-                            "❌ No todo file found for this directory. Run `todo` to create one."
-                        ));
-                    }
-                    Err(error) => return Err(anyhow!("❌ Failed to read todo file: {error}")),
-                }
-                Ok(())
-            }
+            Commands::List(args) => list(args.into()),
             Commands::Count(args) => count(args.filter.into()),
             Commands::Config(args) => {
                 match args.action {
